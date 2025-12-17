@@ -1,0 +1,82 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String?
+  email        String        @unique
+  password     String?
+  role         UserRole      @default(CLIENT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+  ownedCases   Case[]        @relation("CaseOwner")
+  cases        Case[]        @relation("CaseClient")
+  comments     Comment[]
+}
+
+model Case {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String
+  status       CaseStatus    @default(OPEN)
+  priority     CasePriority  @default(MEDIUM)
+  ownerId      Int?
+  userId       Int?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  activityLogs ActivityLog[]
+  owner        User?         @relation("CaseOwner", fields: [ownerId], references: [id])
+  user         User?         @relation("CaseClient", fields: [userId], references: [id])
+  comments     Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  caseId    Int
+  authorId  Int
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id])
+  case      Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id        Int      @id @default(autoincrement())
+  caseId    Int
+  action    String
+  actorId   Int
+  timestamp DateTime @default(now())
+  actor     User     @relation(fields: [actorId], references: [id])
+  case      Case     @relation(fields: [caseId], references: [id])
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  AWAITING_INFO
+  RESOLVED
+  CLOSED
+}
+
+enum CasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+  CLIENT
+}
