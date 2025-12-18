@@ -11,7 +11,7 @@ import { prisma } from "./lib/prisma";
 const app = express();
 
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.get("/health", async (_req, res) => {
@@ -26,13 +26,20 @@ app.get("/health", async (_req, res) => {
 
 app.use("/api/cases", caseRouter);
 
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("Unhandled error:", err);
-  res.status(500).json({ error: "Internal server error" });
-});
+app.use(
+  (
+    err: any,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+);
 
 const port = Number(process.env.PORT || 4000);
 
 app.listen(port, () => {
-  console.log(`Casetrace API listening on http://localhost:${port}`);
+  console.log(`Casetrace API listening on port ${port}`);
 });
